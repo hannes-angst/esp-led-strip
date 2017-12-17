@@ -39,10 +39,6 @@ static void ICACHE_FLASH_ATTR wifi_check_ip(void *arg)
       INFO("STATION_CONNECT_FAIL\r\n");
       wifi_station_connect();
     }
-    else
-    {
-      INFO("STATION_IDLE\r\n");
-    }
 
     os_timer_setfn(&WiFiLinker, (os_timer_func_t *)wifi_check_ip, NULL);
     os_timer_arm(&WiFiLinker, 500, 0);
