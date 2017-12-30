@@ -59,7 +59,7 @@ static void ICACHE_FLASH_ATTR sendDeviceInfo(uint32_t *args) {
 	len += os_sprintf(dataBuf + len, ",\"type\":\"%s\"", MQTT_CLIENT_TYPE);
 	len += os_sprintf(dataBuf + len, ",\"base\":\"%s%08X/\"", MQTT_TOPIC_BASE, system_get_chip_id());
 	len += os_sprintf(dataBuf + len, ",\"group\":\"%sled/wohnzimmer\"}", MQTT_TOPIC_BASE);
-	MQTT_Publish(client, topicBuf, dataBuf, len, 1, 0);
+	MQTT_Publish(client, topicBuf, dataBuf, len, 0, 0);
 
 	os_free(topicBuf);
 	os_free(dataBuf);
