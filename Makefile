@@ -167,7 +167,7 @@ endif
 TARGET = app
 
 # which modules (subdirectories) of the project to include in compiling
-MODULES	= user modules/mqtt modules/pwm modules/wifi
+MODULES	= user modules/mqtt modules/pwm modules/wifi modules/info
 EXTRA_INCDIR = include $(SDK_BASE)/../extra/include
 
 # libraries used in this project, mainly provided by the SDK

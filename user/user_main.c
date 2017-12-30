@@ -1,41 +1,14 @@
-/* main.c -- MQTT client example
- *
- * Copyright (c) 2014-2015, Tuan PM <tuanpm at live dot com>
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * * Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
- * * Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- * * Neither the name of Redis nor the names of its contributors may be used
- * to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
 #include <user_interface.h>
 #include <ets_sys.h>
 #include <osapi.h>
+
 #include <mem.h>
 #include "debug.h"
 #include "mqtt.h"
 #include "wifi.h"
+#include "info.h"
 #include "pwm.c"
+
 
 #define PWM_CHANNELS 3
 
@@ -43,8 +16,7 @@
 #define CHANNEL_GREEN  	1
 #define CHANNEL_RED   	0
 
-#define PWM_CHANNELS 3
-const uint32_t period = 5000; // * 200ns ^= 1 kHz
+const uint32_t MAX_PERIOD = 5000; // * 200ns ^= 1 kHz
 
 // PWM setup
 uint32 io_info[PWM_CHANNELS][3] = {
@@ -72,27 +44,21 @@ static void ICACHE_FLASH_ATTR sendDeviceInfo(uint32_t *args) {
 	os_sprintf(topicBuf, "%s%08X/info", MQTT_TOPIC_BASE, system_get_chip_id());
 
 	int len = 0;
-	len += os_sprintf(dataBuf + len, "{\"name\":\"%s\"", APP_NAME);
-	len += os_sprintf(dataBuf + len, ",\"version\":\"%s\"", APP_VERSION);
+	len += os_sprintf(dataBuf + len, "{\"name\":\"led\"");
+	len += os_sprintf(dataBuf + len, ",\"app\":\"%s\"", APP_NAME);
+	len += os_sprintf(dataBuf + len, ",\"version\":\"%d.%d.%d\"", APP_VER_MAJ, APP_VER_MIN, APP_VER_REV);
 
 	uint8 mac_addr[6];
 	if (wifi_get_macaddr(0, mac_addr)) {
-		len += os_sprintf(dataBuf + len,
-				",\"mac\":\"%02x:%02x:%02x:%02x:%02x:%02x\"", mac_addr[0],
-				mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4],
-				mac_addr[5]);
+		len += os_sprintf(dataBuf + len, ",\"mac\":\"%02x:%02x:%02x:%02x:%02x:%02x\"", mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
 	}
-
 	struct ip_info info;
 	if (wifi_get_ip_info(0, &info)) {
-		len += os_sprintf(dataBuf + len, ",\"ip\":\"%d.%d.%d.%d\"",
-				IP2STR(&info.ip.addr));
+		len += os_sprintf(dataBuf + len, ",\"ip\":\"%d.%d.%d.%d\"", IP2STR(&info.ip.addr));
 	}
-
 	len += os_sprintf(dataBuf + len, ",\"type\":\"%s\"", MQTT_CLIENT_TYPE);
-	len += os_sprintf(dataBuf + len, ",\"base\":\"%s%08X/\"}", MQTT_TOPIC_BASE,
-			system_get_chip_id());
-
+	len += os_sprintf(dataBuf + len, ",\"base\":\"%s%08X/\"", MQTT_TOPIC_BASE, system_get_chip_id());
+	len += os_sprintf(dataBuf + len, ",\"group\":\"%sled/wohnzimmer\"}", MQTT_TOPIC_BASE);
 	MQTT_Publish(client, topicBuf, dataBuf, len, 1, 0);
 
 	os_free(topicBuf);
@@ -109,14 +75,15 @@ static void ICACHE_FLASH_ATTR mqttConnectedCb(uint32_t *args) {
 	os_sprintf(topicBuf, "%s%08X/%s", MQTT_TOPIC_BASE, system_get_chip_id(), MQTT_CLIENT_TYPE);
 	MQTT_Subscribe(client, topicBuf, 2);
 
+	os_sprintf(topicBuf, "%sled/wohnzimmer", MQTT_TOPIC_BASE);
+	MQTT_Subscribe(client, topicBuf, 2);
+
 	//participate in discovery requests
 	MQTT_Subscribe(client, MQTT_DISCOVER, 2);
 
 	//Tell Online status
-	os_sprintf(topicBuf, "%s%08X/%s", MQTT_TOPIC_BASE, system_get_chip_id(),
-	MQTT_STATUS);
-	MQTT_Publish(client, topicBuf, MQTT_STATUS_ONLINE,
-			strlen(MQTT_STATUS_ONLINE), 1, 1);
+	os_sprintf(topicBuf, "%s%08X/%s", MQTT_TOPIC_BASE, system_get_chip_id(), MQTT_STATUS);
+	MQTT_Publish(client, topicBuf, MQTT_STATUS_ONLINE, strlen(MQTT_STATUS_ONLINE), 1, 1);
 
 	os_free(topicBuf);
 }
@@ -163,9 +130,9 @@ void ICACHE_FLASH_ATTR setColor(char* dataBuf) {
 	g = ( g > 255 ? 255 : g < 0 ? 0 : g);
 	b = ( b > 255 ? 255 : b < 0 ? 0 : b);
 
-	pwm_set_duty(r * period / 255, CHANNEL_RED);
-	pwm_set_duty(g * period / 255, CHANNEL_GREEN);
-	pwm_set_duty(b * period / 255, CHANNEL_BLUE);
+	pwm_set_duty(r * MAX_PERIOD / 255, CHANNEL_RED);
+	pwm_set_duty(g * MAX_PERIOD / 255, CHANNEL_GREEN);
+	pwm_set_duty(b * MAX_PERIOD / 255, CHANNEL_BLUE);
 	pwm_start();
 
 	INFO("Red   to %02X.\r\n", r);
@@ -177,10 +144,27 @@ void ICACHE_FLASH_ATTR setColor(char* dataBuf) {
 void ICACHE_FLASH_ATTR user_light_init(void) {
 	// initial duty: all off
 	uint32 pwm_duty_init[PWM_CHANNELS] = { 0, 0, 0 };
-	pwm_init(period, pwm_duty_init, PWM_CHANNELS, io_info);
+	pwm_init(MAX_PERIOD, pwm_duty_init, PWM_CHANNELS, io_info);
 	pwm_start();
 }
 
+static ETSTimer fire_timer;
+static uint8_t fireCounter=0;
+
+static void ICACHE_FLASH_ATTR startFire() {
+	os_timer_disarm(&fire_timer);
+	fireCounter+=7;
+	pwm_set_duty(MAX_PERIOD, CHANNEL_RED);
+	pwm_set_duty((4 + (fireCounter % 10)) * MAX_PERIOD / 255, CHANNEL_GREEN);
+	pwm_set_duty(0, CHANNEL_BLUE);
+	pwm_start();
+
+	os_timer_setfn(&fire_timer, (os_timer_func_t *) startFire, NULL);
+	os_timer_arm(&fire_timer, 100, 0);
+}
+static void ICACHE_FLASH_ATTR stopFire() {
+	os_timer_disarm(&fire_timer);
+}
 
 static void ICACHE_FLASH_ATTR mqttDataCb(uint32_t *args, const char* topic,
 		uint32_t topic_len, const char *data, uint32_t data_len) {
@@ -198,7 +182,11 @@ static void ICACHE_FLASH_ATTR mqttDataCb(uint32_t *args, const char* topic,
 
 	if (os_strcmp(topicBuf, MQTT_DISCOVER) == 0) {
 		sendDeviceInfo(args);
+	} else if(os_strncmp(data, "fire", 4) == 0) {
+		INFO("start fire\r\n");
+		startFire();
 	} else {
+		stopFire();
 		setColor(dataBuf);
 	}
 
@@ -206,26 +194,24 @@ static void ICACHE_FLASH_ATTR mqttDataCb(uint32_t *args, const char* topic,
 	os_free(dataBuf);
 }
 
-void ICACHE_FLASH_ATTR print_info() {
-	INFO("\r\n\r\n[INFO] BOOTUP...\r\n");
-	INFO("[INFO] SDK: %s\r\n", system_get_sdk_version());
-	INFO("[INFO] Chip ID: %08X\r\n", system_get_chip_id());
-	INFO("[INFO] Memory info:\r\n");
-	system_print_meminfo();
+static void ICACHE_FLASH_ATTR mqtt_init(void) {
+	DEBUG("INIT MQTT\r\n");
+	//If WIFI is connected, MQTT gets connected (see wifiConnectCb)
+	MQTT_InitConnection(&mqttClient, MQTT_HOST, MQTT_PORT, SEC_NONSSL);
 
-	INFO("[INFO] -------------------------------------------\n");
-	INFO("[INFO] %s v.%s \n", APP_NAME, APP_VERSION);
-	INFO("[INFO] -------------------------------------------\n");
+	char *clientId = (char*) os_zalloc(64);
+	os_sprintf(clientId, "%s%08X", MQTT_CLIENT_ID, system_get_chip_id());
 
-}
+	char *id = (char*) os_zalloc(32);
+	os_sprintf(id, "%08X", system_get_chip_id());
 
+	//id will be copied by MQTT_InitLWT
+	if (!MQTT_InitClient(&mqttClient, clientId, id, id, MQTT_KEEPALIVE, MQTT_CLEAN_SESSION)) {
+		ERROR("Could not initialize MQTT client");
+	}
+	os_free(id);
+	os_free(clientId);
 
-static void ICACHE_FLASH_ATTR app_init(void) {
-	print_info();
-
-	MQTT_InitConnection(&mqttClient, MQTT_HOST, MQTT_PORT, DEFAULT_SECURITY);
-	MQTT_InitClient(&mqttClient, MQTT_CLIENT_ID, MQTT_USER, MQTT_PASS,
-	MQTT_KEEPALIVE, MQTT_CLEAN_SESSION);
 
 	char *topicBuf = (char*) os_zalloc(256);
 	os_sprintf(topicBuf, "%s%08X/%s", MQTT_TOPIC_BASE, system_get_chip_id(), MQTT_STATUS);
@@ -235,8 +221,16 @@ static void ICACHE_FLASH_ATTR app_init(void) {
 	MQTT_OnPublished(&mqttClient, mqttPublishedCb);
 	MQTT_OnData(&mqttClient, mqttDataCb);
 
-	WIFI_Connect(STA_SSID, STA_PASS, wifiConnectCb);
 	os_free(topicBuf);
+
+}
+
+static void ICACHE_FLASH_ATTR app_init(void) {
+	print_info();
+	mqtt_init();
+
+
+	WIFI_Connect(STA_SSID, STA_PASS, wifiConnectCb);
 
 	user_light_init();
 
