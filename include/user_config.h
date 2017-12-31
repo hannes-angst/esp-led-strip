@@ -86,13 +86,14 @@
 #endif
 
 #ifdef INFO_LEVEL
-#define MQTT_DEBUG_ON
+
 #define INFO( format, ... ) os_printf( "[INFO] " format, ## __VA_ARGS__ )
 #else
 #define INFO( format, ... )
 #endif
 
 #ifdef DEBUG_LEVEL
+#define MQTT_DEBUG_ON 1
 #define DEBUG( format, ... ) os_printf( "[DEBUG] " format, ## __VA_ARGS__ )
 #else
 #define DEBUG( format, ... )
