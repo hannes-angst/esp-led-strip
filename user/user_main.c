@@ -57,7 +57,7 @@ static void ICACHE_FLASH_ATTR sendDeviceInfo(uint32_t *args) {
 	}
 	len += os_sprintf(dataBuf + len, ",\"type\":\"%s\"", MQTT_CLIENT_TYPE);
 	len += os_sprintf(dataBuf + len, ",\"base\":\"%s%08X/\"", MQTT_TOPIC_BASE, system_get_chip_id());
-	len += os_sprintf(dataBuf + len, ",\"group\":\"%sled/wohnzimmer\"}", MQTT_TOPIC_BASE);
+	len += os_sprintf(dataBuf + len, ",\"group\":\""TOPIC_GROUP"\"}", MQTT_TOPIC_BASE);
 	MQTT_Publish(client, topicBuf, dataBuf, len, 0, 0);
 
 	os_free(topicBuf);
@@ -74,7 +74,7 @@ static void ICACHE_FLASH_ATTR mqttConnectedCb(uint32_t *args) {
 	os_sprintf(topicBuf, "%s%08X/%s", MQTT_TOPIC_BASE, system_get_chip_id(), MQTT_CLIENT_TYPE);
 	MQTT_Subscribe(client, topicBuf, 2);
 
-	os_sprintf(topicBuf, "%sled/wohnzimmer", MQTT_TOPIC_BASE);
+	os_sprintf(topicBuf, TOPIC_GROUP, MQTT_TOPIC_BASE);
 	MQTT_Subscribe(client, topicBuf, 2);
 
 	//participate in discovery requests

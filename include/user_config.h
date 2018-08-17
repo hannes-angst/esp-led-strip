@@ -65,6 +65,13 @@
 #include "user_config.local.h"
 #endif
 
+
+#ifndef TOPIC_GROUP
+
+#define TOPIC_GROUP	"%sled/group"
+
+#endif
+
 #define MQTT_RECONNECT_TIMEOUT  5 /*second*/
 
 #define DEFAULT_SECURITY  0
