@@ -9,10 +9,13 @@
 #include <c_types.h>
 #include "user_config.h"
 
+//Maximal color slots
+#define MAX_SLOTS 		1024
+
 typedef struct color_t {
-	uint32_t r;
-	uint32_t g;
-	uint32_t b;
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
 } color_t;
 
 typedef struct color_slots

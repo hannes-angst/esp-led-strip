@@ -18,7 +18,7 @@
 #define APP_NAME        "Remote LED Stripe"
 #define APP_VER_MAJ		1
 #define APP_VER_MIN		1
-#define APP_VER_REV		0
+#define APP_VER_REV		1
 
 //#define DEBUG_ON		//Enable debug
 #define MQTT_HOST     	"192.168.13.100" //or "mqtt.yourdomain.com"
@@ -44,11 +44,9 @@
 #define MQTT_CLEAN_SESSION 1
 #define MQTT_KEEPALIVE 120
 
-//Maximal color slots
-#define MAX_SLOTS 		32
-
 //Amount of PWM channels (R, G B)
-#define PWM_CHANNELS 3
+#define PWM_CHANNELS 		3
+#define PWM_MAX_CHANNELS 	3
 
 // PWM channel to color association
 #define CHANNEL_BLUE   	2

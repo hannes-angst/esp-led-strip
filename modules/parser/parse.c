@@ -4,10 +4,9 @@
 #include <user_interface.h>
 #include <osapi.h>
 #include <c_types.h>
-#include "user_config.h"
 #include "parse.h"
 
-static int ICACHE_FLASH_ATTR readDigit(char value) {
+static int ICACHE_FLASH_ATTR readHexDigit(char value) {
 	if (value < 48) {
 		return 0;
 	}
@@ -18,44 +17,32 @@ static int ICACHE_FLASH_ATTR readDigit(char value) {
 	}
 
 	// between digits
-	if (value > 57 && value < 64) {
+	if (value > 57 && value < 65) {
 		return 9;
 	}
 
+	//a..f
+	if (value > 96 && value < 103) {
+		return value - 87;
+	}
+
+	//more than F
 	if (value > 70) {
 		return 15;
 	}
 
+	//A..F
 	return value - 55;
 }
 
-const uint32_t gammut[] = {
-    0,   1,   1,   2,   2,   2,   2,   2,   2,   3,   3,   3,   3,   3,   3,   3,
-    3,   3,   3,   3,   3,   3,   3,   4,   4,   4,   4,   4,   4,   4,   4,   4,
-    4,   4,   4,   5,   5,   5,   5,   5,   5,   5,   5,   5,   5,   6,   6,   6,
-    6,   6,   6,   6,   6,   7,   7,   7,   7,   7,   7,   7,   8,   8,   8,   8,
-    8,   8,   9,   9,   9,   9,   9,   9,   10,  10,  10,  10,  10,  11,  11,  11,
-    11,  11,  12,  12,  12,  12,  12,  13,  13,  13,  13,  14,  14,  14,  14,  15,
-    15,  15,  16,  16,  16,  16,  17,  17,  17,  18,  18,  18,  19,  19,  19,  20,
-    20,  20,  21,  21,  22,  22,  22,  23,  23,  24,  24,  25,  25,  25,  26,  26,
-    27,  27,  28,  28,  29,  29,  30,  30,  31,  32,  32,  33,  33,  34,  35,  35,
-    36,  36,  37,  38,  38,  39,  40,  40,  41,  42,  43,  43,  44,  45,  46,  47,
-    48,  48,  49,  50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,
-    63,  64,  65,  66,  68,  69,  70,  71,  73,  74,  75,  76,  78,  79,  81,  82,
-    83,  85,  86,  88,  90,  91,  93,  94,  96,  98,  99,  101, 103, 105, 107, 109,
-    110, 112, 114, 116, 118, 121, 123, 125, 127, 129, 132, 134, 136, 139, 141, 144,
-    146, 149, 151, 154, 157, 159, 162, 165, 168, 171, 174, 177, 180, 183, 186, 190,
-    193, 196, 200, 203, 207, 211, 214, 218, 222, 226, 230, 234, 238, 242, 248, 255,
-};
+static void ICACHE_FLASH_ATTR readColor(char dataBuf[7], BOOL dry, struct color_t *color) {
+	int r = readHexDigit(dataBuf[0]) * 16 + readHexDigit(dataBuf[1]);
+	int g = readHexDigit(dataBuf[2]) * 16 + readHexDigit(dataBuf[3]);
+	int b = readHexDigit(dataBuf[4]) * 16 + readHexDigit(dataBuf[5]);
 
-static void ICACHE_FLASH_ATTR readColor(char dataBuf[7], BOOL dry,  struct color_t *color) {
-	int r = readDigit(dataBuf[0]) * 16 + readDigit(dataBuf[1]);
-	int g = readDigit(dataBuf[2]) * 16 + readDigit(dataBuf[3]);
-	int b = readDigit(dataBuf[4]) * 16 + readDigit(dataBuf[5]);
-
-	uint32_t r_val = (uint32_t)(gammut[r > 255 ? 255 : r < 0 ? 0 : r] * MAX_PERIOD / 255);
-	uint32_t g_val = (uint32_t)(gammut[g > 255 ? 255 : g < 0 ? 0 : g] * MAX_PERIOD / 255);
-	uint32_t b_val = (uint32_t)(gammut[b > 255 ? 255 : b < 0 ? 0 : b] * MAX_PERIOD / 255);
+	uint8_t r_val = (int8_t) (r > 255 ? 255 : r < 0 ? 0 : r);
+	uint8_t g_val = (int8_t) (g > 255 ? 255 : g < 0 ? 0 : g);
+	uint8_t b_val = (int8_t) (b > 255 ? 255 : b < 0 ? 0 : b);
 
 	if (dry) {
 		DEBUG("Setting (dry) r,g,b to %d, %d, %d\r\n", r_val, g_val, b_val);
@@ -194,7 +181,7 @@ static enum parse_result_type ICACHE_FLASH_ATTR parseColorsFromInput(char *data,
 enum parse_result_type ICACHE_FLASH_ATTR readColors(char *input, uint16_t length, struct color_slots *slots) {
 	DEBUG("> %s\r\n", input);
 
-    //dry run
+	//dry run
 	enum parse_result_type result = parseColorsFromInput(input, strlen(input), slots, true);
 	if (result == SUCCESS) {
 		result = parseColorsFromInput(input, strlen(input), slots, false);
@@ -202,8 +189,8 @@ enum parse_result_type ICACHE_FLASH_ATTR readColors(char *input, uint16_t length
 
 	if (result == SUCCESS) {
 		uint8_t i = 0;
-		while(i < slots->length) {
-			DEBUG("slot[%d]: %d, %d, %d\r\n", i, slots-> slot[i].r, slots-> slot[i].g, slots-> slot[i].b);
+		while (i < slots->length) {
+			DEBUG("slot[%d]: %d, %d, %d\r\n", i, slots->slot[i].r, slots->slot[i].g, slots->slot[i].b);
 			i++;
 		}
 	}

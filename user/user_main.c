@@ -97,11 +97,11 @@ static void ICACHE_FLASH_ATTR mqttPublishedCb(uint32_t *args) {
 	INFO("MQTT: Published\r\n");
 }
 
-static void ICACHE_FLASH_ATTR setColor(uint32_t r, uint32_t g, uint32_t b) {
-	pwm_set_duty(r, CHANNEL_RED);
-		pwm_set_duty(g, CHANNEL_GREEN);
-		pwm_set_duty(b, CHANNEL_BLUE);
-		pwm_start();
+static void ICACHE_FLASH_ATTR setColor(uint8_t r, uint8_t g, uint8_t b) {
+	pwm_set_duty(r*MAX_PERIOD/255, CHANNEL_RED);
+	pwm_set_duty(g*MAX_PERIOD/255, CHANNEL_GREEN);
+	pwm_set_duty(b*MAX_PERIOD/255, CHANNEL_BLUE);
+	pwm_start();
 }
 
 
@@ -194,7 +194,6 @@ void ICACHE_FLASH_ATTR user_light_init(void) {
 	pwm_init(MAX_PERIOD, pwm_duty_init, PWM_CHANNELS, io_info);
 	pwm_start();
 }
-
 
 static void ICACHE_FLASH_ATTR app_init(void) {
 	slotPos = 0;
