@@ -9,7 +9,7 @@
 #define ERROR_LEVEL
 #define WARN_LEVEL
 #define INFO_LEVEL
-#define DEBUG_LEVEL
+//#define DEBUG_LEVEL
 
 //Disable SSL
 //#define MQTT_SSL_ENABLE
@@ -49,8 +49,8 @@
 #define PWM_MAX_CHANNELS 	3
 
 // PWM channel to color association
-#define CHANNEL_BLUE   	2
-#define CHANNEL_GREEN  	1
+#define CHANNEL_BLUE   	1
+#define CHANNEL_GREEN  	2
 #define CHANNEL_RED   	0
 
 //PWM frequency

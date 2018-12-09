@@ -61,7 +61,7 @@ static void ICACHE_FLASH_ATTR sendDeviceInfo(uint32_t *args) {
 	MQTT_Publish(client, topicBuf, dataBuf, len, 0, 0);
 
 	os_free(topicBuf);
-	os_free(dataBuf);
+	//dataBug freed by MQTT_Publish
 }
 
 static void ICACHE_FLASH_ATTR mqttConnectedCb(uint32_t *args) {
