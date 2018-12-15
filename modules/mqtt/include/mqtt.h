@@ -31,9 +31,9 @@
 #define USER_AT_MQTT_H_
 #include "user_config.h"
 #include "mqtt_msg.h"
+#include "mqtt_queue.h"
 #include "user_interface.h"
 
-#include "queue.h"
 typedef struct mqtt_event_data_t
 {
   uint8_t type;

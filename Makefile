@@ -45,7 +45,7 @@ SPI_MODE ?= QIO
 # 4 : 4096 KB (512 KB + 512 KB)
 # 5 : 2048 KB (1024 KB + 1024 KB)
 # 6 : 4096 KB (1024 KB + 1024 KB)
-SPI_SIZE_MAP ?= 2
+SPI_SIZE_MAP ?= 0
 
 ifeq ($(BOOT), new)
     boot = new

@@ -9,7 +9,7 @@
 #define ERROR_LEVEL
 #define WARN_LEVEL
 #define INFO_LEVEL
-//#define DEBUG_LEVEL
+#define DEBUG_LEVEL
 
 //Disable SSL
 //#define MQTT_SSL_ENABLE
@@ -24,7 +24,7 @@
 #define MQTT_HOST     	"192.168.13.100" //or "mqtt.yourdomain.com"
 #define MQTT_PORT     	1883
 #define MQTT_BUF_SIZE   1024
-#define MQTT_KEEPALIVE  120  /*second*/
+#define MQTT_KEEPALIVE  60  /*second*/
 #define MQTT_CLEAN_SESSION 		1
 
 #define MQTT_DISCOVER		"/angst/devices/discovery/"
@@ -38,11 +38,6 @@
 #define MQTT_STATUS_OFFLINE  "offline"
 
 #define MQTT_CLIENT_ID    	"LED"
-#define MQTT_USER     		""
-#define MQTT_PASS     		""
-
-#define MQTT_CLEAN_SESSION 1
-#define MQTT_KEEPALIVE 120
 
 //Amount of PWM channels (R, G B)
 #define PWM_CHANNELS 		3
@@ -72,10 +67,10 @@
 
 #define MQTT_RECONNECT_TIMEOUT  5 /*second*/
 
-#define DEFAULT_SECURITY  0
+#define DEFAULT_SECURITY  		0
 #define QUEUE_BUFFER_SIZE       2048
 
-#define PROTOCOL_NAMEv311
+#define PROTOCOL_NAMEv31
 //PROTOCOL_NAMEv31      /*MQTT version 3.1 compatible with Mosquitto v0.15*/
 //PROTOCOL_NAMEv311     /*MQTT version 3.11 compatible with https://eclipse.org/paho/clients/testing/*/
 

@@ -21,6 +21,7 @@ static void ICACHE_FLASH_ATTR wifi_check_ip(void *arg)
   {
     os_timer_setfn(&WiFiLinker, (os_timer_func_t *)wifi_check_ip, NULL);
     os_timer_arm(&WiFiLinker, 2000, 0);
+    wifi_station_set_reconnect_policy(true);
   }
   else
   {
@@ -65,5 +66,13 @@ void ICACHE_FLASH_ATTR WIFI_Connect(uint8_t* ssid, uint8_t* pass, WifiCallback c
   os_timer_setfn(&WiFiLinker, (os_timer_func_t *)wifi_check_ip, NULL);
   os_timer_arm(&WiFiLinker, 1000, 0);
   wifi_station_connect();
+}
+
+
+void ICACHE_FLASH_ATTR WIFI_Reconnect(uint8_t* ssid, uint8_t* pass, WifiCallback cb)
+{
+  INFO("WIFI_DISCON\r\n");
+  wifi_station_disconnect();
+  WIFI_Connect(ssid, pass, cb);
 }
 

@@ -6,5 +6,7 @@
 typedef void (*WifiCallback)(uint8_t);
 
 void ICACHE_FLASH_ATTR WIFI_Connect(uint8_t* ssid, uint8_t* pass, WifiCallback cb);
+void ICACHE_FLASH_ATTR WIFI_Reconnect(uint8_t* ssid, uint8_t* pass, WifiCallback cb);
+
 
 #endif /* USER_WIFI_H_ */

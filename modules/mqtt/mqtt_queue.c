@@ -27,7 +27,7 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 */
-#include "queue.h"
+#include "mqtt_queue.h"
 
 #include "user_interface.h"
 #include "osapi.h"
@@ -47,7 +47,7 @@ void ICACHE_FLASH_ATTR QUEUE_Init(QUEUE *queue, int bufferSize)
 int32_t ICACHE_FLASH_ATTR QUEUE_Puts(QUEUE *queue, uint8_t* buffer, uint16_t len)
 {
   uint32_t ret;
-
+  
   last_rb_p_r = queue->rb.p_r;
   last_rb_p_w = queue->rb.p_w;
   last_fill_cnt = queue->rb.fill_cnt;

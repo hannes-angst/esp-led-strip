@@ -16,10 +16,10 @@ static uint8_t slotPos = 0;
 
 static ETSTimer fire_timer;
 
-MQTT_Client mqttClient;
+static MQTT_Client mqttClient;
 
 // PWM setup
-uint32 io_info[PWM_CHANNELS][3] = {
+static uint32 io_info[PWM_CHANNELS][3] = {
 		// MUX, FUNC, PIN
 		{ PERIPHS_IO_MUX_MTDI_U, FUNC_GPIO12, 12 },
 		{ PERIPHS_IO_MUX_MTCK_U, FUNC_GPIO13, 13 },
@@ -28,9 +28,12 @@ uint32 io_info[PWM_CHANNELS][3] = {
 
 static void ICACHE_FLASH_ATTR wifiConnectCb(uint8_t status) {
 	if (status == STATION_GOT_IP) {
+		INFO("Connected to AP.\r\n");
 		MQTT_Connect(&mqttClient);
+	} else if (status == STATION_WRONG_PASSWORD || status == STATION_NO_AP_FOUND || status == STATION_CONNECT_FAIL) {
+		INFO("Error connecting to AP.\r\n");
 	} else {
-		MQTT_Disconnect(&mqttClient);
+		INFO("Connecting to AP.\r\n");
 	}
 }
 
@@ -58,10 +61,12 @@ static void ICACHE_FLASH_ATTR sendDeviceInfo(uint32_t *args) {
 	len += os_sprintf(dataBuf + len, ",\"type\":\"%s\"", MQTT_CLIENT_TYPE);
 	len += os_sprintf(dataBuf + len, ",\"base\":\"%s%08X/\"", MQTT_TOPIC_BASE, system_get_chip_id());
 	len += os_sprintf(dataBuf + len, ",\"group\":\""TOPIC_GROUP"\"}", MQTT_TOPIC_BASE);
+
+
 	MQTT_Publish(client, topicBuf, dataBuf, len, 0, 0);
 
 	os_free(topicBuf);
-	//dataBug freed by MQTT_Publish
+	//dataBuf freed by MQTT_Publish
 }
 
 static void ICACHE_FLASH_ATTR mqttConnectedCb(uint32_t *args) {
@@ -72,13 +77,13 @@ static void ICACHE_FLASH_ATTR mqttConnectedCb(uint32_t *args) {
 
 	//C&C
 	os_sprintf(topicBuf, "%s%08X/%s", MQTT_TOPIC_BASE, system_get_chip_id(), MQTT_CLIENT_TYPE);
-	MQTT_Subscribe(client, topicBuf, 2);
+	MQTT_Subscribe(client, topicBuf, 0);
 
 	os_sprintf(topicBuf, TOPIC_GROUP, MQTT_TOPIC_BASE);
-	MQTT_Subscribe(client, topicBuf, 2);
+	MQTT_Subscribe(client, topicBuf, 0);
 
 	//participate in discovery requests
-	MQTT_Subscribe(client, MQTT_DISCOVER, 2);
+	MQTT_Subscribe(client, MQTT_DISCOVER, 0);
 
 	//Tell Online status
 	os_sprintf(topicBuf, "%s%08X/%s", MQTT_TOPIC_BASE, system_get_chip_id(), MQTT_STATUS);
@@ -88,12 +93,11 @@ static void ICACHE_FLASH_ATTR mqttConnectedCb(uint32_t *args) {
 }
 
 static void ICACHE_FLASH_ATTR mqttDisconnectedCb(uint32_t *args) {
-	MQTT_Client* client = (MQTT_Client*) args;
 	INFO("MQTT: Disconnected\r\n");
+	WIFI_Reconnect(STA_SSID, STA_PASS, wifiConnectCb);
 }
 
 static void ICACHE_FLASH_ATTR mqttPublishedCb(uint32_t *args) {
-	MQTT_Client* client = (MQTT_Client*) args;
 	INFO("MQTT: Published\r\n");
 }
 
@@ -135,12 +139,14 @@ static void ICACHE_FLASH_ATTR startFire() {
 }
 
 static void ICACHE_FLASH_ATTR mqttDataCb(uint32_t *args, const char* topic, uint32_t topic_len, const char *data, uint32_t data_len) {
-
-	char *topicBuf = (char*) os_zalloc(topic_len + 1), *dataBuf = (char*) os_zalloc(data_len + 1);
+	char *topicBuf = (char*) os_zalloc(topic_len + 1);
+	char *dataBuf = (char*) os_zalloc(data_len + 1);
 
 	MQTT_Client* client = (MQTT_Client*) args;
+
 	os_memcpy(topicBuf, topic, topic_len);
 	topicBuf[topic_len] = 0;
+
 	os_memcpy(dataBuf, data, data_len);
 	dataBuf[data_len] = 0;
 
@@ -176,15 +182,10 @@ static void ICACHE_FLASH_ATTR mqtt_init(void) {
 	os_free(id);
 	os_free(clientId);
 
-	char *topicBuf = (char*) os_zalloc(256);
-	os_sprintf(topicBuf, "%s%08X/%s", MQTT_TOPIC_BASE, system_get_chip_id(), MQTT_STATUS);
-	MQTT_InitLWT(&mqttClient, topicBuf, MQTT_STATUS_OFFLINE, 2, 1);
 	MQTT_OnConnected(&mqttClient, mqttConnectedCb);
 	MQTT_OnDisconnected(&mqttClient, mqttDisconnectedCb);
 	MQTT_OnPublished(&mqttClient, mqttPublishedCb);
 	MQTT_OnData(&mqttClient, mqttDataCb);
-
-	os_free(topicBuf);
 }
 
 
